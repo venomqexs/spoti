@@ -157,7 +157,7 @@
 }
 
 .album-artwork {
-  @apply relative group overflow-hidden rounded-xl aspect-square;
+  @apply relative overflow-hidden rounded-xl aspect-square;
 }
 
 .album-artwork::after {

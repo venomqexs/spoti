@@ -82,7 +82,7 @@
 
 /* Search Enhancements */
 .search-container {
-  @apply relative group;
+  @apply relative;
 }
 
 .search-container::after {

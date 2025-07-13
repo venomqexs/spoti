@@ -40,7 +40,7 @@
 
 /* Navigation Enhancements */
 .nav-link {
-  @apply flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 group relative overflow-hidden;
+  @apply flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 relative overflow-hidden;
 }
 
 .nav-link::before {

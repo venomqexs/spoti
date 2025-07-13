@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Music2, Eye, EyeOff, Mail, Lock, ArrowRight } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Music2, Eye, EyeOff, Mail, Lock, ArrowRight, Check } from 'lucide-react';
 import { authService } from '../../services/authService';
 
 const Login = ({ onLogin }) => {
@@ -11,6 +11,22 @@ const Login = ({ onLogin }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const navigate = useNavigate();
+
+  // Check network connection status
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   const handleChange = (e) => {
     setFormData({
@@ -20,25 +36,72 @@ const Login = ({ onLogin }) => {
     setError('');
   };
 
+  const validateForm = () => {
+    if (!formData.email) {
+      setError('Email is required');
+      return false;
+    }
+    if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      setError('Please enter a valid email address');
+      return false;
+    }
+    if (!formData.password) {
+      setError('Password is required');
+      return false;
+    }
+    return true;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    if (!isOnline) {
+      setError('You are offline. Please check your internet connection.');
+      return;
+    }
+
+    if (!validateForm()) {
+      return;
+    }
+
     setLoading(true);
     setError('');
 
     try {
       const response = await authService.login(formData);
+      
+      if (!response) {
+        throw new Error('No response from server');
+      }
+      
+      // Store user data and token
       onLogin(response.user, response.access_token);
+      
+      // Redirect to home page after successful login
+      navigate('/');
     } catch (error) {
       console.error('Login error:', error);
-      if (error.response?.data?.detail) {
-        setError(error.response.data.detail);
-      } else if (error.response?.status === 422) {
-        setError('Please check your email format and try again.');
-      } else if (error.response?.status >= 500) {
-        setError('Server error. Please try again later.');
+      
+      if (error.code === 'ERR_NETWORK') {
+        setError('Network error. Please check your internet connection.');
+      } else if (error.response) {
+        // Server responded with error status
+        const { status, data } = error.response;
+        
+        if (status === 400 || status === 401) {
+          setError(data.detail || 'Invalid email or password');
+        } else if (status === 422) {
+          setError('Please check your email format and try again.');
+        } else if (status === 429) {
+          setError('Too many attempts. Please try again later.');
+        } else {
+          setError(`Server error (${status}): Please try again later`);
+        }
       } else if (error.request) {
-        setError('Connection error. Please check your internet connection.');
+        // Request was made but no response received
+        setError('Server is not responding. Please try again later.');
       } else {
+        // Other errors
         setError('Login failed. Please try again.');
       }
     } finally {
@@ -48,6 +111,15 @@ const Login = ({ onLogin }) => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-foxenfy-black via-foxenfy-dark to-foxenfy-gray-900 relative overflow-hidden">
+      {/* Network status indicator */}
+      {!isOnline && (
+        <div className="absolute top-4 left-0 right-0 flex justify-center">
+          <div className="bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg">
+            You are currently offline
+          </div>
+        </div>
+      )}
+
       {/* Animated Background Elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-foxenfy-primary opacity-10 rounded-full blur-3xl animate-pulse-slow"></div>
@@ -101,6 +173,11 @@ const Login = ({ onLogin }) => {
                   className="input-field w-full pl-12 pr-4 py-4 text-base"
                   placeholder="Enter your email address"
                 />
+                {formData.email && /\S+@\S+\.\S+/.test(formData.email) && (
+                  <div className="absolute inset-y-0 right-0 pr-4 flex items-center">
+                    <Check className="h-5 w-5 text-green-400" />
+                  </div>
+                )}
               </div>
 
               <div className="relative">
@@ -121,6 +198,7 @@ const Login = ({ onLogin }) => {
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute inset-y-0 right-0 pr-4 flex items-center text-foxenfy-gray-400 hover:text-white transition-colors duration-200"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                 </button>
@@ -129,11 +207,16 @@ const Login = ({ onLogin }) => {
 
             <button
               type="submit"
-              disabled={loading}
-              className="w-full btn-primary flex items-center justify-center space-x-2 py-4 text-base font-semibold"
+              disabled={loading || !isOnline}
+              className={`w-full btn-primary flex items-center justify-center space-x-2 py-4 text-base font-semibold ${
+                loading || !isOnline ? 'opacity-70 cursor-not-allowed' : ''
+              }`}
             >
               {loading ? (
-                <div className="loading-spinner h-5 w-5"></div>
+                <>
+                  <span>Signing In...</span>
+                  <div className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full"></div>
+                </>
               ) : (
                 <>
                   <span>Sign In</span>
@@ -146,9 +229,12 @@ const Login = ({ onLogin }) => {
           {/* Additional Options */}
           <div className="mt-6 space-y-4">
             <div className="text-center">
-              <a href="#" className="text-foxenfy-primary hover:text-foxenfy-accent transition-colors duration-200 text-sm font-medium">
+              <Link 
+                to="/forgot-password" 
+                className="text-foxenfy-primary hover:text-foxenfy-accent transition-colors duration-200 text-sm font-medium"
+              >
                 Forgot your password?
-              </a>
+              </Link>
             </div>
 
             <div className="relative">

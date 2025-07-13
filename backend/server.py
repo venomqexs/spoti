@@ -509,7 +509,7 @@ async def get_chat_messages(limit: int = 50, current_user: dict = Depends(get_cu
 async def health_check():
     try:
         # Test database connection
-        await db.admin.command('ping')
+        result = await client.admin.command('ping')
         return {
             "status": "healthy",
             "timestamp": datetime.utcnow().isoformat(),

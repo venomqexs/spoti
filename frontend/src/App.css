@@ -19,7 +19,7 @@
 }
 
 .playlist-card {
-  @apply bg-gradient-to-br from-foxenfy-gray-800 to-foxenfy-gray-900 rounded-2xl p-6 hover:from-foxenfy-gray-700 hover:to-foxenfy-gray-800 transition-all duration-300 group cursor-pointer border border-foxenfy-gray-700 hover:border-foxenfy-primary hover:shadow-glow;
+  @apply bg-gradient-to-br from-foxenfy-gray-800 to-foxenfy-gray-900 rounded-2xl p-6 hover:from-foxenfy-gray-700 hover:to-foxenfy-gray-800 transition-all duration-300 cursor-pointer border border-foxenfy-gray-700 hover:border-foxenfy-primary hover:shadow-glow;
 }
 
 /* Music Player Enhancements */

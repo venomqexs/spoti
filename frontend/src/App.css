@@ -15,7 +15,7 @@
 }
 
 .song-card {
-  @apply bg-foxenfy-gray-800 rounded-xl p-4 hover:bg-foxenfy-gray-700 transition-all duration-200 group cursor-pointer border border-transparent hover:border-foxenfy-primary hover:border-opacity-30;
+  @apply bg-foxenfy-gray-800 rounded-xl p-4 hover:bg-foxenfy-gray-700 transition-all duration-200 cursor-pointer border border-transparent hover:border-foxenfy-primary hover:border-opacity-30;
 }
 
 .playlist-card {
